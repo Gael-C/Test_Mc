@@ -111,12 +111,12 @@ class Ecritures
 		return $this;
 	}
 
-	public function getDate(): ?\DateTimeInterface
+	public function getDate(): ?\DateTime
 	{
 		return $this->date;
 	}
 
-	public function setDate(?\DateTimeInterface $date): self
+	public function setDate(?\DateTime $date): self
 	{
 		$this->date = $date;
 
@@ -147,24 +147,24 @@ class Ecritures
 		return $this;
 	}
 
-	public function getCreatedAt(): ?\DateTimeInterface
+	public function getCreatedAt(): ?\DateTime
 	{
 		return $this->createdAt;
 	}
 
-	public function setCreatedAt(?\DateTimeInterface $createdAt): self
+	public function setCreatedAt(?\DateTime $createdAt): self
 	{
 		$this->createdAt = $createdAt;
 
 		return $this;
 	}
 
-	public function getUpdatedAt(): ?\DateTimeInterface
+	public function getUpdatedAt(): ?\DateTime
 	{
 		return $this->updatedAt;
 	}
 
-	public function setUpdatedAt(?\DateTimeInterface $updatedAt): self
+	public function setUpdatedAt(?\DateTime $updatedAt): self
 	{
 		$this->updatedAt = $updatedAt;
 
@@ -183,8 +183,35 @@ class Ecritures
 		return $this;
 	}
 
-	public function __toString():string
+	public function __toStringUuid():string
 	{
 		return $this->uuid;
+
 	}
+
+	public function __toStringLabel():string
+	{
+		return $this->label;
+
+	}
+
+	public function __toStringAmount():string
+	{
+		return $this->amount;
+
+	}
+
+	public function __toStringType():string
+	{
+		return $this->type;
+
+	}
+
+	public function __toStringUpdated_at():string
+	{
+		return $this->updatedAt;
+
+	}
+
+
 }

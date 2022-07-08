@@ -4,9 +4,12 @@ namespace App\Repository;
 
 use App\Entity\Ecritures;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Annotations\Annotation\Enum;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Result;
+use Doctrine\DBAL\Statement;
 use Doctrine\Persistence\ManagerRegistry;
+use Ramsey\Uuid\UuidInterface;
 
 /**
  * @extends ServiceEntityRepository<Ecritures>
@@ -39,17 +42,15 @@ class EcrituresRepository extends ServiceEntityRepository
 	{
 		$conn = $this->getEntityManager()->getConnection();
 
-		$stmt = $conn->prepare('SELECT  e.label, e.date, e.type, e.amount, e.created_at,e. updated_at
+		$stmt = $conn->prepare('SELECT  e.uuid, e.label, e.date, e.type, e.amount, e.created_at,e. updated_at
 		FROM ecritures e 
-		JOIN comptes c on c.uuid = e.compte_uuid
-		WHERE c.uuid =:uuid ');
+		WHERE e.compte_uuid =:uuid ');
 
 		$stmt->bindParam(':uuid',$uuid);
 
 		$rs = $stmt->executeQuery();
 
 		return $rs->fetchAllAssociative();
-
 
 	}
 
@@ -86,4 +87,5 @@ class EcrituresRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+
 }

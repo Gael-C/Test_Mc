@@ -148,5 +148,28 @@
 			return $this->json(new Response('Un soucis a été rencontré, merci de recommencer', 400));
 		}
 
+		/**
+		 * @Route("/api/comptes/{c_uuid}/ecritures/{uuid}", name="api_post_Delete", methods={"DELETE"})
+		 * @throws Exception
+		 */
+		public function delete(Request $request, ?Ecritures $ecritures, EntityManagerInterface $em)
+		{
+			$c_uuid = $request->attributes->get('c_uuid');
+			$uuid = $request->attributes->get('uuid');
 
+			$conn = $em->getConnection();
+
+			if (!empty($c_uuid) || !empty($uuid)){
+
+				$stmt = $conn->prepare('DELETE FROM ecritures WHERE `uuid` =:uuid AND `compte_uuid` =:c_uuid');
+
+				$stmt->bindParam(':uuid', $uuid);
+				$stmt->bindParam(':c_uuid', $c_uuid);
+
+				$stmt->executeStatement();
+
+				return $this->json('Supression effectuée',200);
+			}
+				return $this->json('Erreur dans la suppression',400);
+		}
 	}

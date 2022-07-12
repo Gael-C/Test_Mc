@@ -2,12 +2,16 @@
 
 namespace App\Controller;
 
+use App\Entity\Comptes;
+use App\Entity\Ecritures;
 use App\Repository\ComptesRepository;
 use Doctrine\DBAL\Exception;
+use Ramsey\Uuid\Uuid;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class ComptesController extends AbstractController
 {
@@ -33,4 +37,33 @@ class ComptesController extends AbstractController
 
 		}
 	}
+
+	/**
+	 * @Route("/api/comptes", name="api_comptes_Post", methods={"Post"})
+	 * @throws Exception
+	 */
+
+	public function createCompte(Request $request, SerializerInterface $seria, ComptesRepository $repo): Response
+	{
+		$jsonRecu = $request->getContent();
+		$compte = $seria->deserialize($jsonRecu, Comptes::class, 'json');
+
+		if (!empty($compte)){
+
+			$uuid = $compte->setUuid(Uuid::uuid4())->__toStringUuid();
+			$login = $compte->getLogin();
+			$password = $compte->getPassword();
+			$name = $compte->getName();
+
+			$repo->addComptes($uuid,$login,$password,$name);
+
+			return new Response('Uuid créé avec succès', 201);
+
+		}else{
+
+			return new Response('Échec de la création du compte, merci de recommencer',400);
+		}
+	}
+
+
 }

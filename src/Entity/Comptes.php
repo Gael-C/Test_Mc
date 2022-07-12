@@ -60,28 +60,19 @@ class Comptes
      */
     private $updatedAt = 'CURRENT_TIMESTAMP';
 
-	/**
-	 * @param Uuid $uuid
-	 * @param string $login
-	 * @param string $password
-	 * @param string $name
-	 * @param \DateTime|string|null $createdAt
-	 * @param \DateTime|string|null $updatedAt
-	 */
-	public function __construct(Uuid $uuid, string $login, string $password, string $name, $createdAt, $updatedAt)
-                                 	{
-                                 		$this->uuid = Uuid::uuid4();
-                                 		$this->login = $login;
-                                 		$this->password = $password;
-                                 		$this->name = $name;
-                                 		$this->createdAt = $createdAt;
-                                 		$this->updatedAt = $updatedAt;
-                                 	}
+
 
     public function getUuid()
     {
         return $this->uuid;
     }
+
+	public function setUuid(UuidInterface $uuid): self
+	{
+		$this->uuid = $uuid->toString();
+
+		return $this;
+	}
 
     public function getLogin(): ?string
     {
@@ -142,6 +133,12 @@ class Comptes
 
         return $this;
     }
+
+	public function __toStringUuid():string
+	{
+		return $this->uuid;
+
+	}
 
 
 }

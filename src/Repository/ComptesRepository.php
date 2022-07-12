@@ -18,6 +18,11 @@ use Doctrine\Persistence\ManagerRegistry;
 class ComptesRepository extends ServiceEntityRepository
 {
 
+	public function __construct(ManagerRegistry $registry)
+	{
+		parent::__construct($registry, Comptes::class);
+	}
+
 	/**
 	 * @throws Exception
 	 */
@@ -39,19 +44,27 @@ class ComptesRepository extends ServiceEntityRepository
 		return $rs->fetchAllAssociative();
 
 	}
-    public function __construct(ManagerRegistry $registry)
+
+
+	/**
+	 * @throws Exception
+	 */
+	public function addComptes(string $uuid, string $login, string $password, string $name): void
     {
-        parent::__construct($registry, Comptes::class);
+		$conn = $this->getEntityManager()->getConnection();
+
+		$stmt = $conn->prepare('INSERT INTO comptes (uuid, login, password, name, updated_at)
+			VALUES (:uuid, :login, :password,:name,null )
+			');
+		$stmt->bindParam(':uuid', $uuid);
+		$stmt->bindParam(':login', $login);
+		$stmt->bindParam(':password', $password);
+		$stmt->bindParam(':name', $name);
+
+		$stmt->executeStatement();
     }
 
-    public function add(Comptes $entity, bool $flush = false): void
-    {
-        $this->getEntityManager()->persist($entity);
 
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
-    }
 
     public function remove(Comptes $entity, bool $flush = false): void
     {

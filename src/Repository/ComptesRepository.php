@@ -64,7 +64,25 @@ class ComptesRepository extends ServiceEntityRepository
 		$stmt->executeStatement();
     }
 
+	/**
+	 * @throws Exception
+	 */
+	public function updateCompte(string $login, string $password, string $name, string $updated_at, string $uuid, string $password2):void
+	{
+		$conn = $this->getEntityManager()->getConnection();
 
+		$stmt = $conn->prepare('UPDATE `comptes` SET `password` =:password, `name` =:name, `updated_at`=:updated_at
+											WHERE `uuid` =:uuid AND `login` =:login AND `password` =:password2');
+
+		$stmt->bindParam(':password', $password);
+		$stmt->bindParam(':name', $name);
+		$stmt->bindParam(':updated_at', $updated_at);
+		$stmt->bindParam(':login', $login);
+		$stmt->bindParam(':password2', $password2);
+		$stmt->bindParam(':uuid', $uuid);
+
+		$stmt->executeStatement();
+	}
 
     public function remove(Comptes $entity, bool $flush = false): void
     {

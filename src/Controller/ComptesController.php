@@ -5,9 +5,11 @@ namespace App\Controller;
 use App\Entity\Comptes;
 use App\Entity\Ecritures;
 use App\Repository\ComptesRepository;
+use App\Repository\EcrituresRepository;
 use Doctrine\DBAL\Exception;
 use Ramsey\Uuid\Uuid;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -65,5 +67,38 @@ class ComptesController extends AbstractController
 		}
 	}
 
+	/**
+	 * @Route("/api/comptes/{uuid}", name="api_comptes_Put", methods={"PUT"})
+	 * @throws Exception
+	 */
+
+	public function updateCompte(Request $request,ComptesRepository $repo): Response
+	{
+		$uuid = $request->attributes->get('uuid');
+		$login = $request->headers->get('login');
+		$old_pass = $request->headers->get('password');
+		$d = date_create('');
+
+
+		$donnees = json_decode($request->getContent(), true);
+
+
+		if (!empty($donnees)){
+
+			$compte = new Comptes();
+
+			$name = $compte->setName($donnees['name'])->__toStringName();
+			$password = $compte->setPassword($donnees['password'])->__toStringPass();
+			$updated_at = date_format($d, 'Y-m-d H:i:s');
+
+			$repo->updateCompte($login,$password,$name,$updated_at,$uuid,$old_pass);
+
+			return new Response('Compte modifié avec succès', 201);
+
+		}else{
+
+			return new Response('Échec de la modification du compte, merci de recommencer',400);
+		}
+	}
 
 }

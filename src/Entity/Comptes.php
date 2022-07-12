@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Ramsey\Uuid\Doctrine\UuidGenerator;
 
@@ -66,6 +65,11 @@ class Comptes
     {
         return $this->uuid;
     }
+
+	public function __toString():string
+	{
+		return $this;
+	}
 
 	public function setUuid(UuidInterface $uuid): self
 	{
@@ -138,6 +142,16 @@ class Comptes
 	{
 		return $this->uuid;
 
+	}
+
+	public function __toStringName():string
+	{
+		return $this->name;
+	}
+
+	public function __toStringPass():string
+	{
+		return $this->password;
 	}
 
 

@@ -84,14 +84,21 @@ class ComptesRepository extends ServiceEntityRepository
 		$stmt->executeStatement();
 	}
 
-    public function remove(Comptes $entity, bool $flush = false): void
-    {
-        $this->getEntityManager()->remove($entity);
+	/**
+	 * @throws Exception
+	 */
+	public function removeCompte(string $uuid, string $login, string $pass):void
+	{
+		$conn = $this->getEntityManager()->getConnection();
 
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
-    }
+		$stmt = $conn->prepare('DELETE FROM comptes WHERE `uuid` =:uuid AND `login` =:login AND `password` =:password');
+
+		$stmt->bindParam(':uuid', $uuid);
+		$stmt->bindParam(':login', $login);
+		$stmt->bindParam(':password', $pass);
+
+		$stmt->executeStatement();
+	}
 
 //    /**
 //     * @return Comptes[] Returns an array of Comptes objects

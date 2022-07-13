@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class ComptesController extends AbstractController
@@ -100,5 +101,32 @@ class ComptesController extends AbstractController
 			return new Response('Échec de la modification du compte, merci de recommencer',400);
 		}
 	}
+
+	/**
+	 * @Route("/api/comptes/{uuid}", name="api_compte_Delete", methods={"DELETE","GET"})
+	 * @throws Exception|ExceptionInterface
+	 */
+	public function delete(Request $request, ComptesRepository $repo,EcrituresRepository $e_repo, SerializerInterface $seria):Response
+	{
+		$uuid = $request->attributes->get('uuid');
+		$login = $request->headers->get('login');
+		$password = $request->headers->get('password');
+
+		$ecritures = $e_repo->findEcritures($uuid);
+		$ecritures = $seria->normalize($ecritures,'json');
+
+		if (!empty($ecritures)){
+
+			throw new Exception('Impossible de supprimer un compte comportant des écritures.',50);
+
+		}else{
+
+			$repo->removeCompte($uuid,$login,$password);
+
+		}
+		return new Response('Suppression effectuée',204);
+
+	}
+
 
 }

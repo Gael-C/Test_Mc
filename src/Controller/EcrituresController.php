@@ -6,31 +6,40 @@
 	use App\Exception\AmountException;
 	use App\Repository\EcrituresRepository;
 	use Doctrine\DBAL\Exception;
-	use Doctrine\ORM\EntityManagerInterface;
 	use Ramsey\Uuid\Uuid;
 	use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+	use Symfony\Component\HttpFoundation\JsonResponse;
 	use Symfony\Component\HttpFoundation\Request;
 	use Symfony\Component\HttpFoundation\Response;
 	use App\Exception\DateException;
 	use Symfony\Component\Routing\Annotation\Route;
-	use Symfony\Component\Serializer\Exception\ExceptionInterface;
+	use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 	use Symfony\Component\Serializer\SerializerInterface;
 
-	class ApiController extends AbstractController
+	class EcrituresController extends AbstractController
 	{
 		/**
-		 * @Route("/api/comptes/{uuid}/ecritures", name="api_post_index",methods={"GET"})
-		 * @throws Exception|ExceptionInterface
+		 * @Route("/api/comptes/{uuid}/ecritures", name="api_ecritures",methods={"GET"})
+		 * @throws Exception
+		 * @throws \Exception
 		 */
-		public function index(EcrituresRepository $repo, Request $request)
+		public function list(EcrituresRepository $repo, Request $request,NormalizerInterface $norma)
 		{
 			$uuid = $request->attributes->get('uuid');
 
+			if (!Uuid::isValid($uuid)){
+				throw new \Exception('Merci de rentrer un Uuid correct',99 );
+			}
+
 			$ecritures = $repo->findEcritures($uuid);
 
+			$array = ['items'=>$ecritures];
 			if (!empty($ecritures)) {
 
-				return $this->json($ecritures, 200, []);
+				return $this->json($array, 200, [
+					'Access-Control-Allow-Origin'=>'*',
+					'Access-Control-Allow-Credentials'=> true
+				]);
 
 			} else {
 
@@ -40,20 +49,28 @@
 		}
 
 		/**
-		 * @Route("/api/comptes/{uuid}/ecritures", name="api_post_Post", methods={"POST"})
-		 * @throws Exception
+		 * @Route("/api/comptes/{uuid}/ecritures", name="api_ecritures_Post", methods={"POST"})
+		 * @throws \Exception
 		 */
-		public function create(Request $request, SerializerInterface $seria, EntityManagerInterface $em)
+		public function create(Request $request, SerializerInterface $seria,EcrituresRepository $repo): Response
 		{
-			$today_date = date_create('');
 			$c_uuid = $request->attributes->get('uuid');
+
+			if (!Uuid::isValid($c_uuid)){
+				throw new \Exception('Merci de rentrer un Uuid correct',99 );
+			}
 
 			if (!empty($c_uuid)) {
 				$jsonRecu = $request->getContent();
-				$ecritures = $seria->deserialize($jsonRecu, Ecritures::class, 'json');
+				$parsed = json_decode($jsonRecu, true);
+				$amount = array('amount' =>(float)$parsed['amount']);
+				$json = array_replace($parsed,$amount);
+				$json = json_encode($json);
 
-				$uuid = $ecritures->setUuid(Uuid::uuid4())
-								  ->__toStringUuid();
+				$ecritures = $seria->deserialize($json, Ecritures::class, 'json');
+
+
+				$uuid = $ecritures->setUuid(Uuid::uuid4())->__toStringUuid();
 				$label = $ecritures->getLabel();
 				$type = $ecritures->getType();
 				$amount = $ecritures->getAmount();
@@ -68,35 +85,31 @@
 						(new DateException)->verifDate($ts_today, $ts_d);
 						(new AmountException)->verifAmount($amount);
 
-						$conn = $em->getConnection();
+						$repo->createEcriture($uuid, $c_uuid, $label, $date, $type, $amount);
 
-						$stmt = $conn->prepare('INSERT INTO ecritures (uuid, compte_uuid, label, date, type, amount)
-			VALUES (:uuid, :c_uuid, :label,:date, :type, :amount)
-			');
-						$stmt->bindParam(':uuid', $uuid);
-						$stmt->bindParam(':c_uuid', $c_uuid);
-						$stmt->bindParam(':label', $label);
-						$stmt->bindParam(':date', $date);
-						$stmt->bindParam(':type', $type);
-						$stmt->bindParam(':amount', $amount);
-
-						$stmt->executeStatement();
-
-						return new Response('Uuid créé avec succès', 201);
+						return new Response('Uuid créé avec succès', 201,[
+							'Access-Control-Allow-Origin'=>'*',
+							'Access-Control-Allow-Credentials'=> true
+						]);
 
 					} catch (Exception $e) {
 						echo $e->getMessage();
 					}
-				}
+			}
 			return new Response('Merci d\'entrer un numéro de compte valide', 400);
 		}
 
 		/**
-		 * @Route("/api/comptes/{c_uuid}/ecritures/{uuid}", name="api_post_Put", methods={"PUT"})
+		 * @Route("/api/comptes/{c_uuid}/ecritures/{uuid}", name="api_ecritures_Put", methods={"PUT"})
+		 * @throws \Exception
 		 */
-		public function update(Request $request, ?Ecritures $ecritures, EntityManagerInterface $em)
+		public function update(Request $request,EcrituresRepository $repo): JsonResponse
 		{
 			$c_uuid = $request->attributes->get('c_uuid');
+
+			if (!Uuid::isValid($c_uuid)){
+				throw new \Exception('Merci de rentrer un Uuid correct',99 );
+			}
 
 			$donnees = json_decode($request->getContent(), true);
 
@@ -117,7 +130,6 @@
 				$amount = floatval($ecritures->setAmount($donnees['amount'])
 											 ->__toStringAmount());
 				$updated_at = date_format($d, 'Y-m-d H:i:s');
-
 				$ts_d = strtotime($date);
 				$today_date = date_create('');
 				$ts_today = strtotime(date_format($today_date, 'Y-m-d'));
@@ -126,18 +138,7 @@
 					(new DateException)->verifDate($ts_today, $ts_d);
 					(new AmountException)->verifAmount($amount);
 
-					$conn = $em->getConnection();
-					$stmt = $conn->prepare('UPDATE `ecritures` SET `label` =:label, `date` =:date, `type` =:type, `amount` =:amount, `updated_at` =:upd_date 
-											WHERE `uuid` =:uuid AND `compte_uuid` =:c_uuid');
-					$stmt->bindParam(':label', $label);
-					$stmt->bindParam(':date', $date);
-					$stmt->bindParam(':type', $type);
-					$stmt->bindParam(':amount', $amount);
-					$stmt->bindParam(':upd_date', $updated_at);
-					$stmt->bindParam(':uuid', $uuid);
-					$stmt->bindParam(':c_uuid', $c_uuid);
-
-					$stmt->executeStatement();
+					$repo->updateEcriture($label,$date,$type,$amount,$updated_at, $uuid, $c_uuid);
 
 					return $this->json(new Response('Modification effectuée', 204));
 
@@ -149,26 +150,24 @@
 		}
 
 		/**
-		 * @Route("/api/comptes/{c_uuid}/ecritures/{uuid}", name="api_post_Delete", methods={"DELETE"})
+		 * @Route("/api/comptes/{c_uuid}/ecritures/{uuid}", name="api_ecritures_Delete", methods={"DELETE"})
 		 * @throws Exception
+		 * @throws \Exception
 		 */
-		public function delete(Request $request, ?Ecritures $ecritures, EntityManagerInterface $em)
+		public function delete(Request $request, EcrituresRepository $repo):JsonResponse
 		{
 			$c_uuid = $request->attributes->get('c_uuid');
 			$uuid = $request->attributes->get('uuid');
 
-			$conn = $em->getConnection();
+			if (!Uuid::isValid($uuid )|| !Uuid::isValid($c_uuid)){
+				throw new \Exception('Merci de rentrer un Uuid correct',99 );
+			}
 
 			if (!empty($c_uuid) || !empty($uuid)){
 
-				$stmt = $conn->prepare('DELETE FROM ecritures WHERE `uuid` =:uuid AND `compte_uuid` =:c_uuid');
+				$repo->removeEcriture($uuid, $c_uuid);
 
-				$stmt->bindParam(':uuid', $uuid);
-				$stmt->bindParam(':c_uuid', $c_uuid);
-
-				$stmt->executeStatement();
-
-				return $this->json('Supression effectuée',200);
+				return $this->json('Supression effectuée',204);
 			}
 				return $this->json('Erreur dans la suppression',400);
 		}

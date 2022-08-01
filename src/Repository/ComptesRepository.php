@@ -100,28 +100,25 @@ class ComptesRepository extends ServiceEntityRepository
 		$stmt->executeStatement();
 	}
 
-//    /**
-//     * @return Comptes[] Returns an array of Comptes objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('c.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+	/**
+	 * @throws Exception
+	 */
+	public function listAllComptes() : array
+	{
+		$conn = $this->getEntityManager()->getConnection();
 
-//    public function findOneBySomeField($value): ?Comptes
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+		$stmt = $conn->prepare('SELECT  c.uuid FROM comptes c 
+        							LEFT JOIN
+       										 (SELECT  e.compte_uuid FROM ecritures e
+       										  INNER JOIN comptes c
+       										  ON c.uuid = e.compte_uuid
+            								  GROUP BY e.compte_uuid
+       										 )
+       										e ON e.compte_uuid = c.uuid ');
+
+		$rs = $stmt->executeQuery();
+
+		return $rs->fetchAllAssociative();
+
+	}
 }

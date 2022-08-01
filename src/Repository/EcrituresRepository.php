@@ -4,41 +4,27 @@ namespace App\Repository;
 
 use App\Entity\Ecritures;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Common\Annotations\Annotation\Enum;
 use Doctrine\DBAL\Exception;
-use Doctrine\DBAL\Result;
-use Doctrine\DBAL\Statement;
 use Doctrine\Persistence\ManagerRegistry;
-use Ramsey\Uuid\UuidInterface;
 
 /**
  * @extends ServiceEntityRepository<Ecritures>
  *
  * @method Ecritures|null find($id, $lockMode = null, $lockVersion = null)
  * @method Ecritures|null findOneBy(array $criteria, array $orderBy = null)
- * @method Ecritures[]    findAll()
  * @method Ecritures[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
 class EcrituresRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, Ecritures::class);
-    }
-
-    public function add(Ecritures $entity, bool $flush = false): void
-    {
-        $this->getEntityManager()->persist($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
-    }
+	public function __construct(ManagerRegistry $registry)
+	{
+		parent::__construct($registry, Ecritures::class);
+	}
 
 	/**
 	 * @throws Exception
 	 */
-	public function findEcritures(string $uuid) : array
+	public function findEcritures(string $uuid): array
 	{
 		$conn = $this->getEntityManager()->getConnection();
 
@@ -46,7 +32,7 @@ class EcrituresRepository extends ServiceEntityRepository
 		FROM ecritures e 
 		WHERE e.compte_uuid =:uuid ');
 
-		$stmt->bindParam(':uuid',$uuid);
+		$stmt->bindParam(':uuid', $uuid);
 
 		$rs = $stmt->executeQuery();
 
@@ -54,38 +40,79 @@ class EcrituresRepository extends ServiceEntityRepository
 
 	}
 
-    public function remove(Ecritures $entity, bool $flush = false): void
-    {
-        $this->getEntityManager()->remove($entity);
+	/**
+	 * @throws Exception
+	 */
+	public function createEcriture(string $uuid, string $c_uuid, string $label, string $date, string $type, float $amount):void
+	{
+		$conn = $this->getEntityManager()->getConnection();
 
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
-    }
+		$stmt = $conn->prepare('INSERT INTO ecritures (uuid, compte_uuid, label, date, type, amount, updated_at)
+			VALUES (:uuid, :c_uuid, :label,:date, :type, :amount, null)
+			');
+		$stmt->bindParam(':uuid', $uuid);
+		$stmt->bindParam(':c_uuid', $c_uuid);
+		$stmt->bindParam(':label', $label);
+		$stmt->bindParam(':date', $date);
+		$stmt->bindParam(':type', $type);
+		$stmt->bindParam(':amount', $amount);
 
-//    /**
-//     * @return Ecritures[] Returns an array of Ecritures objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('e')
-//            ->andWhere('e.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('e.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+		$stmt->executeStatement();
 
-//    public function findOneBySomeField($value): ?Ecritures
-//    {
-//        return $this->createQueryBuilder('e')
-//            ->andWhere('e.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function updateEcriture(string $label, string $date, string $type, float $amount, string $updated_at,string $uuid, string $c_uuid):void
+	{
+		$conn = $this->getEntityManager()->getConnection();
+
+		$stmt = $conn->prepare('UPDATE `ecritures` SET `label` =:label, `date` =:date, `type` =:type, `amount` =:amount, `updated_at` =:updated_at 
+											WHERE `uuid` =:uuid AND `compte_uuid` =:c_uuid');
+
+		$stmt->bindParam(':label', $label);
+		$stmt->bindParam(':date', $date);
+		$stmt->bindParam(':updated_at', $updated_at);
+		$stmt->bindParam(':type', $type);
+		$stmt->bindParam(':amount', $amount);
+		$stmt->bindParam(':uuid', $uuid);
+		$stmt->bindParam(':c_uuid', $c_uuid);
+
+		$stmt->executeStatement();
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function removeEcriture(string $uuid, string $c_uuid)
+	{
+		$conn = $this->getEntityManager()->getConnection();
+
+		$stmt = $conn->prepare('DELETE FROM ecritures WHERE `uuid` =:uuid AND `compte_uuid` =:c_uuid');
+
+		$stmt->bindParam(':uuid', $uuid);
+		$stmt->bindParam(':c_uuid', $c_uuid);
+
+		$stmt->executeStatement();
+	}
+
+
+	public function total(string $c_uuid)
+	{
+		$C = 'C';
+		$D = 'D';
+
+		$conn = $this->getEntityManager()->getConnection();
+
+		$stmt = $conn->prepare('SELECT 
+							  (SELECT SUM(amount) FROM ecritures WHERE type=:C AND compte_uuid =:c_uuid ) 
+   							  - (SELECT SUM(amount) FROM ecritures WHERE type=:D AND compte_uuid =:c_uuid ) AS "total"');
+
+		$stmt->bindParam('c_uuid',$c_uuid);
+		$stmt->bindParam('C',$C);
+		$stmt->bindParam('c_uuid',$D);
+
+	}
 
 }

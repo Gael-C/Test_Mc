@@ -38,7 +38,39 @@
 
 				return $this->json($array, 200, [
 					'Access-Control-Allow-Origin'=>'*',
-					'Access-Control-Allow-Credentials'=> true
+					'Content-Type'=> 'application/json',
+				]);
+
+			} else {
+
+				return new Response('Aucunes écritures trouves avec cet uuid', 404);
+
+			}
+		}
+
+		/**
+		 * @Route("/api/comptes/{c_uuid}/ecritures/{uuid}", name="api_une_ecriture",methods={"GET"})
+		 * @throws Exception
+		 * @throws \Exception
+		 */
+		public function getOne(EcrituresRepository $repo, Request $request)
+		{
+			$c_uuid = $request->attributes->get('c_uuid');
+			$uuid = $request->attributes->get('uuid');
+
+			if (!Uuid::isValid($uuid)){
+				throw new \Exception('Merci de rentrer un Uuid correct',99 );
+			}
+
+			$ecriture = $repo->findOne($c_uuid,$uuid);
+
+
+			if (!empty($ecriture)) {
+
+
+				return new JsonResponse($ecriture, 200, [
+					'Access-Control-Allow-Origin'=>'*',
+					'Content-Type'=> 'application/json',
 				]);
 
 			} else {
@@ -87,9 +119,10 @@
 
 						$repo->createEcriture($uuid, $c_uuid, $label, $date, $type, $amount);
 
+
 						return new Response('Uuid créé avec succès', 201,[
 							'Access-Control-Allow-Origin'=>'*',
-							'Access-Control-Allow-Credentials'=> true
+							'Content-Type'=> 'application/json',
 						]);
 
 					} catch (Exception $e) {
@@ -113,10 +146,9 @@
 
 			$donnees = json_decode($request->getContent(), true);
 
-
 			if (!empty($donnees)) {
 
-				$d = \DateTime::createFromFormat('d.m.Y', $donnees['date']);
+				$d = \DateTime::createFromFormat('d-m-Y', $donnees['date']);
 
 				$ecritures = new Ecritures();
 
@@ -140,7 +172,10 @@
 
 					$repo->updateEcriture($label,$date,$type,$amount,$updated_at, $uuid, $c_uuid);
 
-					return $this->json(new Response('Modification effectuée', 204));
+					return $this->json(new Response('Modification effectuée', 204,[
+						'Access-Control-Allow-Origin'=>'*',
+						'Content-Type'=> 'application/json',
+					]));
 
 				} catch (Exception $e) {
 					echo $e->getMessage();
@@ -167,7 +202,10 @@
 
 				$repo->removeEcriture($uuid, $c_uuid);
 
-				return $this->json('Supression effectuée',204);
+				return $this->json('Supression effectuée',204,[
+					'Access-Control-Allow-Origin'=>'*',
+					'Content-Type'=> 'application/json',
+				]);
 			}
 				return $this->json('Erreur dans la suppression',400);
 		}

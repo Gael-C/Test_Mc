@@ -43,6 +43,26 @@ class EcrituresRepository extends ServiceEntityRepository
 	/**
 	 * @throws Exception
 	 */
+	public function findOne(string $c_uuid, string  $uuid): array
+	{
+		$conn = $this->getEntityManager()->getConnection();
+
+		$stmt = $conn->prepare('SELECT  *
+		FROM ecritures 
+		WHERE compte_uuid =:c_uuid  AND uuid =:uuid');
+
+		$stmt->bindParam(':c_uuid', $c_uuid);
+		$stmt->bindParam(':uuid', $uuid);
+
+		$rs = $stmt->executeQuery();
+
+		return $rs->fetchAllAssociative();
+
+	}
+
+	/**
+	 * @throws Exception
+	 */
 	public function createEcriture(string $uuid, string $c_uuid, string $label, string $date, string $type, float $amount):void
 	{
 		$conn = $this->getEntityManager()->getConnection();

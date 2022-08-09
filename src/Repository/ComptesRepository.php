@@ -107,6 +107,22 @@ class ComptesRepository extends ServiceEntityRepository
 	{
 		$conn = $this->getEntityManager()->getConnection();
 
+		$stmt = $conn->prepare('SELECT  c.uuid, c.login FROM comptes c 
+        							');
+
+		$rs = $stmt->executeQuery();
+
+		return $rs->fetchAllAssociative();
+
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function listAll() : array
+	{
+		$conn = $this->getEntityManager()->getConnection();
+
 		$stmt = $conn->prepare('SELECT  c.uuid FROM comptes c 
         							LEFT JOIN
        										 (SELECT  e.compte_uuid FROM ecritures e

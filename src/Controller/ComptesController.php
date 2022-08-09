@@ -53,9 +53,7 @@ class ComptesController extends AbstractController
 		$comptes= $repo->listAllComptes();
 
 		if (!empty($comptes)) {
-			$parsed = json_decode((string)$comptes, true);
-			$c_uuid = $comptes['uuid'];
-			var_dump($c_uuid);
+
 			return $this->json($comptes, 200);
 
 		} else {

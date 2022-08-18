@@ -21,4 +21,4 @@ Dans une prochaine mise à jour, je dois également ajouter une route afin de r�
  
 Cette API peut être consommé avec l'Ui disponible dans le repository [Ui](https://github.com/Gael-C/UI).
 
-Ceci étant suelement ma deuxième API de développé, je suis preneur de toutes suggestions et/ou critique.
+Ceci étant seulement ma première API de développé, je suis preneur de toutes suggestions et/ou critique.

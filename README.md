@@ -1,6 +1,6 @@
 # Test_Mc
 
-Ce repository a été créé dans le but de passer un test pour l'entreprise MaCompta.fr.  
+Ce repository a été créé dans le but de passer un test pour une entreprise.  
 Le but de ce test était de créer une API avec le framework de mon choix (ici symfony 5), sans utiliser D'ORM.
 
 Pour la création et la gestion des Uuid, j'ai utliser le Bundle [RamseyUuid](https://github.com/ramsey/uuid).  
